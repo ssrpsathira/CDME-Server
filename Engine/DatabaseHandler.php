@@ -30,7 +30,6 @@ class DatabaseHandler {
                 echo $e->getMessage();
             }
         }
-        var_dump($this->dbConnection);
         return $this->dbConnection;
     }
 
