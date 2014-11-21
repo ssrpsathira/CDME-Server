@@ -35,7 +35,7 @@ class DatabaseHandler {
 
     public function executeQuery($sqlQuery) {
         try {
-            return $this->getDatabaseConnection()->exec($sqlQuery);
+            return $this->getDatabaseConnection()->query($sqlQuery)->fetchAll();
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
