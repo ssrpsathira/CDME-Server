@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Config/DatabaseConfig.php';
+require_once dirname(__FILE__).'/../Config/DatabaseConfig.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -30,6 +30,7 @@ class DatabaseHandler {
                 echo $e->getMessage();
             }
         }
+        var_dump($this->dbConnection);
         return $this->dbConnection;
     }
 

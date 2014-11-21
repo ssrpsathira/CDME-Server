@@ -1,6 +1,6 @@
 <?php
 
-require_once '../Engine/DatabaseHandler.php';
+require_once dirname(__FILE__).'/../Engine/DatabaseHandler.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -18,7 +18,7 @@ class NoiseDataService {
     protected $databaseHandler;
     
     public function __construct() {
-        $createNoiseTablesQuery = file_get_contents('../DbScripts/noise_service_tables.sql');
+        $createNoiseTablesQuery = file_get_contents(dirname(__FILE__).'/../DbScripts/noise_service_tables.sql');
         $this->getDatabaseHandler()->executeQuery($createNoiseTablesQuery);
     }
 
