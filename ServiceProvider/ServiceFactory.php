@@ -1,6 +1,8 @@
 <?php
 
-require_once dirname(__FILE__).'/NoiseDataService.php';
+require_once dirname(__FILE__) . '/NoiseDataService.php';
+require_once dirname(__FILE__) . '/../Config/DatabaseConfig.php';
+require_once dirname(__FILE__) . '/ConfigService.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -20,6 +22,7 @@ class ServiceFactory {
 
     protected $servicePrefix;
     protected $dataService;
+    protected $configurationService;
 
     protected function getDataService() {
         if (!$this->dataService) {
@@ -32,7 +35,17 @@ class ServiceFactory {
         return $this->dataService;
     }
 
+    protected function getConfigurationService() {
+        if (!$this->configurationService) {
+            $this->configurationService = new ConfigService();
+        }
+        return $this->configurationService;
+    }
+
     public function __construct($data) {
+        if (!file_exists(dirname(__FILE__) . '/../Config/' . DatabaseConfig::DB_INFO_FILE_NAME)) {
+            $this->getConfigurationService()->createDatabaseAndTables();
+        }
         $metaData = $data['metadata'];
         $this->setServicePrefix($metaData['service']);
         if ($metaData['mode'] == self::SERVICE_MODE_UPLOAD) {

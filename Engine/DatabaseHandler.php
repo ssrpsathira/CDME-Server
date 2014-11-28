@@ -1,6 +1,6 @@
 <?php
 
-require_once dirname(__FILE__).'/../Config/DatabaseConfig.php';
+require_once dirname(__FILE__) . '/../Config/DatabaseConfig.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -38,6 +38,17 @@ class DatabaseHandler {
             return $this->getDatabaseConnection()->query($sqlQuery)->fetchAll();
         } catch (PDOException $e) {
             echo $e->getMessage();
+        }
+    }
+
+    public function createDatabase() {
+        try {
+            $dbh = new PDO("mysql:host=$this->host", $this->username, $this->password);
+
+            $dbh->exec("CREATE DATABASE `$this->dbName`;")
+                    or die(print_r($dbh->errorInfo(), true));
+        } catch (PDOException $e) {
+            die("DB ERROR: " . $e->getMessage());
         }
     }
 

@@ -14,6 +14,7 @@
 class DatabaseConfig {
     const HOST = 'localhost';
     const USER_NAME = 'root';
-    const PASSWORD = 'root';
+    const PASSWORD = '';
     const DB_NAME = 'db_cdme';
+    const DB_INFO_FILE_NAME = 'db_details.txt';
 }
