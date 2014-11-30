@@ -44,7 +44,7 @@ class ServiceFactory {
 
     public function __construct($data) {
         if (!file_exists(dirname(__FILE__) . '/../Config/' . DatabaseConfig::DB_INFO_FILE_NAME)) {
-            $this->getConfigurationService()->createDatabaseAndTables();
+            $this->getConfigurationService()->createDatabaseTables();
         }
         $metaData = $data['metadata'];
         $this->setServicePrefix($metaData['service']);

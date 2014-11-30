@@ -20,6 +20,10 @@ class DatabaseHandler {
     protected $dbName = DatabaseConfig::DB_NAME;
     protected $dbConnection;
 
+    /**
+     * 
+     * @return PDO
+     */
     public function getDatabaseConnection() {
         if (!$this->dbConnection) {
             try {
@@ -35,20 +39,15 @@ class DatabaseHandler {
 
     public function executeQuery($sqlQuery) {
         try {
-            return $this->getDatabaseConnection()->query($sqlQuery)->fetchAll();
+            if ($sth = $this->getDatabaseConnection()->query($sqlQuery)) {
+                return $sth->fetchAll();
+            } else {
+                var_dump($this->getDatabaseConnection()->errorCode());
+                var_dump($this->getDatabaseConnection()->errorInfo());
+            }
+            return null;
         } catch (PDOException $e) {
-            echo $e->getMessage();
-        }
-    }
-
-    public function createDatabase() {
-        try {
-            $dbh = new PDO("mysql:host=$this->host", $this->username, $this->password);
-
-            $dbh->exec("CREATE DATABASE `$this->dbName`;")
-                    or die(print_r($dbh->errorInfo(), true));
-        } catch (PDOException $e) {
-            die("DB ERROR: " . $e->getMessage());
+           
         }
     }
 
