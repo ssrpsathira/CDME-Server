@@ -7,8 +7,17 @@ ENGINE = INNODB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `cdme_noise_data`(
 `id` BIGINT NOT NULL AUTO_INCREMENT, 
+`user_id` BIGINT,
 `location_id` BIGINT NOT NULL, 
 `noise_level` VARCHAR(100) NOT NULL, 
-`date_time` DATETIME,
+`date_time` TEXT,
+PRIMARY KEY(`id`))
+ENGINE = INNODB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `cdme_user`(
+`id` BIGINT NOT NULL AUTO_INCREMENT, 
+`imei` TEXT,
+`used_time` TEXT, 
+`distance_traveled` TEXT, 
 PRIMARY KEY(`id`))
 ENGINE = INNODB DEFAULT CHARSET=utf8;
