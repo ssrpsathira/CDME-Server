@@ -42,17 +42,21 @@ class ServiceFactory {
         return $this->configurationService;
     }
 
-    public function __construct($data) {
+    public function __construct() {
         if (!file_exists(dirname(__FILE__) . '/../Config/' . DatabaseConfig::DB_INFO_FILE_NAME)) {
             $this->getConfigurationService()->createDatabaseTables();
         }
+    }
+
+    public function processData($data) {
         $metaData = $data['metadata'];
         $this->setServicePrefix($metaData['service']);
         if ($metaData['mode'] == self::SERVICE_MODE_UPLOAD) {
-            $this->getDataService()->initializeDataUploadService($data['rawdata']);
+            $result = $this->getDataService()->initializeDataUploadService($data['rawdata']);
         } else {
-            $this->getDataService()->initializeDataDownloadService($data['rawdata']);
+            $result = $this->getDataService()->initializeDataDownloadService($data['rawdata']);
         }
+        return $result;
     }
 
     function getServicePrefix() {

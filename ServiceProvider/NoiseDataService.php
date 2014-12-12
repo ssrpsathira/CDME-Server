@@ -33,15 +33,22 @@ class NoiseDataService {
         return "INSERT INTO `cdme_noise_data` (`location_id`, `noise_level`) VALUES (" . $rawData['location_id'] . ", " . $rawData['noise_level'] . ")";
     }
 
+    protected function createDataDownloadQuery($rawData) {
+        return "SELECT * FROM `cdme_noise_data` ORDER BY `date_time` ASC;";
+    }
+
     public function initializeDataUploadService($rawData) {
         $this->setRawData($rawData);
         $uploadQuery = $this->createDataUploadQuery($rawData);
         $results = $this->getDatabaseHandler()->executeQuery($uploadQuery);
-        return $results;
+        return json_encode($results);
     }
 
     public function initializeDataDownloadService($rawData) {
-        
+        $this->setRawData($rawData);
+        $downloadQuery = $this->createDataDownloadQuery($rawData);
+        $results = $this->getDatabaseHandler()->executeQuery($downloadQuery);
+        return json_encode($results);
     }
 
     function getRawData() {
