@@ -1,0 +1,10 @@
+<Style id="%region_id%">
+<LineStyle>
+<width>1</width>
+<color>ff000000</color>
+</LineStyle>
+<PolyStyle>
+<color>%poligon_opacity%%poligon_color%</color>
+<fill>1</fill>
+</PolyStyle>
+</Style>
