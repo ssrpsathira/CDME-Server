@@ -43,9 +43,7 @@ class ServiceFactory {
     }
 
     public function __construct() {
-        if (!file_exists(dirname(__FILE__) . '/../Config/' . DatabaseConfig::DB_INFO_FILE_NAME)) {
-            $this->getConfigurationService()->createDatabaseTables();
-        }
+
     }
 
     public function processData($data) {

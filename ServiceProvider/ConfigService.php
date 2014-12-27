@@ -23,17 +23,4 @@ class ConfigService {
         }
         return $this->databaseHandler;
     }
-
-    public function createDatabaseTables() {
-        $this->getDatabaseHandler()->executeQuery($this->getCreateCdmeTablesQuery());
-        $this->createDbInformationFile();
-    }
-
-    protected function createDbInformationFile() {
-        $dbInfoFile = fopen(dirname(__FILE__) . '/../Config/db_details.txt', 'w');
-    }
-
-    protected function getCreateCdmeTablesQuery(){
-        return file_get_contents(dirname(__FILE__) . '/../DbScripts/noise_service_tables.sql');
-    }
 }
