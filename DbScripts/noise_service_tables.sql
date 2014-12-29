@@ -47,16 +47,6 @@ CREATE TABLE IF NOT EXISTS `cdme_admin_2_region_statistics` (
 PRIMARY KEY(`id`))
 ENGINE = INNODB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `cdme_admin_2_region_kml_templae_values` (
-`id` BIGINT NOT NULL AUTO_INCREMENT,
-`region_id` BIGINT NOT NULL,
-`poligon_opacity` TEXT,
-`poligon_color` TEXT,
-`region_name` TEXT,
-`polygons` LONGTEXT,
-PRIMARY KEY(`id`))
-ENGINE = INNODB DEFAULT CHARSET=utf8;
-
 ALTER TABLE `cdme_location`
 ADD CONSTRAINT FOREIGN KEY (`admin_1_region_id`) REFERENCES `cdme_admin_1_region`(`id`)
 ON UPDATE CASCADE
@@ -78,11 +68,6 @@ ON UPDATE CASCADE
 ON DELETE CASCADE;
 
 ALTER TABLE `cdme_admin_2_region_statistics`
-ADD CONSTRAINT FOREIGN KEY (`region_id`) REFERENCES `cdme_admin_2_region`(`id`)
-ON UPDATE CASCADE
-ON DELETE CASCADE;
-
-ALTER TABLE `cdme_admin_2_region_kml_templae_values`
 ADD CONSTRAINT FOREIGN KEY (`region_id`) REFERENCES `cdme_admin_2_region`(`id`)
 ON UPDATE CASCADE
 ON DELETE CASCADE;
