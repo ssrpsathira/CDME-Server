@@ -6,6 +6,8 @@ $dbHandler = new DatabaseHandler();
 
 $getStatisticalDataQuery = "SELECT DISTINCT(`cdme_admin_2_region_statistics`.region_id), `cdme_admin_2_region`.name, `cdme_admin_2_region_statistics`.mod, `cdme_admin_2_region_statistics`.median, `cdme_admin_2_region_statistics`.mean, `cdme_admin_2_region_statistics`.sd FROM `cdme_admin_2_region_statistics` LEFT JOIN `cdme_admin_2_region` ON `cdme_admin_2_region`.id = `cdme_admin_2_region_statistics`.region_id ORDER BY `cdme_admin_2_region_statistics`.date_time DESC";
 $results = $dbHandler->executeQuery($getStatisticalDataQuery);
+$kmlStyleText = '';
+$placeMarkText = '';
 foreach ($results as $result) {
     $regionId = $result['region_id'];
     $polygonOpacity = '55';
@@ -111,8 +113,26 @@ foreach ($results as $result) {
                         </tr>
                     </table>";
 
-    $polygonsQuery = '';
+    $polygonsText = file_get_contents(dirname(__FILE__) . '/../kml/SL/polygons/level2/region_' . $regionId . '_polygons.txt');
+    $placeMarkText .= str_replace(array('%region_name%', '%description%', '%region_id%', '%polygons%'), array($regionName, $description, $regionId, $polygonsText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_placemark.txt'));
 }
 
-var_dump($kmlStyleText);
+$kmlText = str_replace(array('{styles}', '{placemarks}'), array($kmlStyleText, $placeMarkText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_template.txt'));
 
+$path = dirname(__FILE__) . '/../kml/SL/admin_2_regions.kml';
+$zipArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions.zip';
+$kmzArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions.kmz';
+
+file_put_contents($path, $kmlText);
+
+$zipArchive = new ZipArchive();
+if (file_exists($zipArchivePath)) {
+    unlink($zipArchivePath);
+}
+if ($zipArchive->open($zipArchivePath, ZIPARCHIVE::CREATE) != TRUE) {
+    die("Could not open archive");
+}
+$zipArchive->addFile($path, 'admin_2_regions.kml');
+// close and save archive
+$zipArchive->close();
+rename($zipArchivePath, $kmzArchivePath);
