@@ -84,7 +84,7 @@ foreach ($results as $result) {
     If (strlen($B) < 2)
         $B = '0' . $B;
 
-    $polygonColor = $R . $G . $B;
+    $polygonColor = $B . $G . $R;
     $regionName = $result['name'];
 
     $kmlStyleText .= str_replace(array('%region_id%', '%poligon_opacity%', '%poligon_color%'), array($regionId, $polygonOpacity, $polygonColor), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_style.txt'));
