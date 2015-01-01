@@ -3,7 +3,7 @@
 require_once dirname(__FILE__) . '/../Engine/DatabaseHandler.php';
 
 $dbHandler = new DatabaseHandler();
-$resultQuery = "SELECT `cdme_admin_2_region`.id, `cdme_noise_data`.noise_level FROM `cdme_admin_2_region` LEFT JOIN `cdme_location` ON `cdme_location`.admin_1_region_id = `cdme_admin_2_region`.id LEFT JOIN `cdme_noise_data` ON `cdme_noise_data`.location_id = `cdme_location`.id";
+$resultQuery = "SELECT `cdme_admin_2_region`.id, `cdme_noise_data`.noise_level FROM `cdme_admin_2_region` LEFT JOIN `cdme_location` ON `cdme_location`.admin_2_region_id = `cdme_admin_2_region`.id LEFT JOIN `cdme_noise_data` ON `cdme_noise_data`.location_id = `cdme_location`.id";
 $result = $dbHandler->executeQuery($resultQuery);
 foreach ($result as $set) {
     if (empty($regionNoiseArray[$set['id']])) {
