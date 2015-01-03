@@ -114,7 +114,7 @@ foreach ($results as $result) {
                     </table>";
 
     $polygonsText = file_get_contents(dirname(__FILE__) . '/../kml/SL/polygons/level2/region_' . $regionId . '_polygons.txt');
-    $placeMarkText .= str_replace(array('%region_name%', '%description%', '%region_id%', '%polygons%'), array($regionName, $description, $regionId, $polygonsText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_placemark.txt'));
+    $placeMarkText .= str_replace(array('%region_level%', '%region_name%', '%description%', '%region_id%', '%polygons%'), array(2, $regionName, $description, $regionId, $polygonsText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_placemark.txt'));
 }
 
 $kmlText = str_replace(array('{styles}', '{placemarks}'), array($kmlStyleText, $placeMarkText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_template.txt'));

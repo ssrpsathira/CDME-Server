@@ -1,4 +1,4 @@
-<Placemark>
+<Placemark id="%region_id%_%region_level%">
 <name>%region_name%</name>
 <description><![CDATA[%description%]]></description>
 <styleUrl>#%region_id%</styleUrl>

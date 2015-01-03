@@ -15,7 +15,6 @@ require_once dirname(__FILE__) . '/../Engine/DatabaseHandler.php';
 
 class NoiseDataService {
 
-    protected $rawData;
     protected $databaseHandler;
 
     public function __construct() {
@@ -115,7 +114,8 @@ class NoiseDataService {
         }
     }
 
-    protected function createDataUploadQuery($rawData) {
+    protected function createDataUploadQuery($data) {
+        $rawData = $data['rawdata'];
         $existingLocationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
         if ($existingLocationId) {
             $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES (NULL,'" . $existingLocationId . "', '" . $rawData['noise_level'] . "','" . $rawData['date_time'] . "');";
@@ -129,30 +129,27 @@ class NoiseDataService {
         return $dataInsertQuery;
     }
 
-    public function createDataDownloadQuery($rawData) {
-        return "SELECT * FROM `cdme_noise_data` LEFT JOIN `cdme_location` ON `cdme_noise_data`.`location_id` = `cdme_location`.`id` ORDER BY `cdme_noise_data`.`date_time` ASC;";
+    public function createDataDownloadQuery($data) {
+        $metaData = $data['metadata'];
+        $rawData = $data['rawdata'];
+        switch ($metaData['feature']) {
+            case 'allLocations':
+                $query = "SELECT * FROM `cdme_noise_data` LEFT JOIN `cdme_location` ON `cdme_noise_data`.`location_id` = `cdme_location`.`id` ORDER BY `cdme_noise_data`.`date_time` ASC;";
+                break;
+        }
+        return $query;
     }
 
-    public function initializeDataUploadService($rawData) {
-        $this->setRawData($rawData);
-        $uploadQuery = $this->createDataUploadQuery($rawData);
+    public function initializeDataUploadService($data) {
+        $uploadQuery = $this->createDataUploadQuery($data);
         $results = $this->getDatabaseHandler()->executeQuery($uploadQuery);
         return json_encode($results);
     }
 
-    public function initializeDataDownloadService($rawData) {
-        $this->setRawData($rawData);
-        $downloadQuery = $this->createDataDownloadQuery($rawData);
+    public function initializeDataDownloadService($data) {
+        $downloadQuery = $this->createDataDownloadQuery($data);
         $results = $this->getDatabaseHandler()->executeQuery($downloadQuery);
         return json_encode($results);
-    }
-
-    function getRawData() {
-        return $this->rawData;
-    }
-
-    function setRawData($rawData) {
-        $this->rawData = $rawData;
     }
 
 }

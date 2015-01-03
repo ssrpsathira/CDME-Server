@@ -50,9 +50,9 @@ class ServiceFactory {
         $metaData = $data['metadata'];
         $this->setServicePrefix($metaData['service']);
         if ($metaData['mode'] == self::SERVICE_MODE_UPLOAD) {
-            $result = $this->getDataService()->initializeDataUploadService($data['rawdata']);
+            $result = $this->getDataService()->initializeDataUploadService($data);
         } else {
-            $result = $this->getDataService()->initializeDataDownloadService($data['rawdata']);
+            $result = $this->getDataService()->initializeDataDownloadService($data);
         }
         return $result;
     }
