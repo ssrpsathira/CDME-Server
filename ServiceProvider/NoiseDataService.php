@@ -136,6 +136,9 @@ class NoiseDataService {
             case 'allLocations':
                 $query = "SELECT * FROM `cdme_noise_data` LEFT JOIN `cdme_location` ON `cdme_noise_data`.`location_id` = `cdme_location`.`id` ORDER BY `cdme_noise_data`.`date_time` ASC;";
                 break;
+            case 'adminRegionStatistics':
+                $query = 'SELECT * FROM `cdme_admin_'.$rawData['region_level'].'_region_statistics` WHERE `region_id`='.$rawData['region_id'].';';
+                break;
         }
         return $query;
     }
