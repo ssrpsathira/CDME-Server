@@ -3,8 +3,18 @@
 require_once dirname(__FILE__) . '/../Engine/DatabaseHandler.php';
 
 $dbHandler = new DatabaseHandler();
-
-$getStatisticalDataQuery = "SELECT DISTINCT(`cdme_admin_2_region_statistics`.`region_id`), `cdme_admin_2_region`.`name`, `cdme_admin_2_region_statistics`.`mod`, `cdme_admin_2_region_statistics`.`median`, `cdme_admin_2_region_statistics`.`mean`, `cdme_admin_2_region_statistics`.`sd` FROM `cdme_admin_2_region_statistics` LEFT JOIN `cdme_admin_2_region` ON `cdme_admin_2_region`.`id` = `cdme_admin_2_region_statistics`.`region_id` GROUP BY `cdme_admin_2_region_statistics`.`region_id` ORDER BY `cdme_admin_2_region_statistics`.`date_time` DESC";
+$getStatisticalDataQuery = "SELECT p1.*, r.`name`
+FROM `cdme_admin_2_region_statistics` p1
+INNER JOIN
+(
+    SELECT max(`date_time`) MaxDateTime, `region_id`
+    FROM `cdme_admin_2_region_statistics`
+    GROUP BY `region_id`
+) p2
+  ON p1.`region_id` = p2.`region_id`
+  AND p1.`date_time` = p2.MaxDateTime
+LEFT JOIN `cdme_admin_2_region` r ON r.`id` = p1.`region_id`
+order by p1.region_id;";
 $results = $dbHandler->executeQuery($getStatisticalDataQuery);
 $kmlStyleText = '';
 $placeMarkText = '';
