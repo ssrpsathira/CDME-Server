@@ -38,6 +38,16 @@ class NoiseDataService {
         }
     }
 
+    public function isExistingUser($imei) {
+        $existingUserIdQuery = "SELECT `id` FROM `cdme_user` WHERE `imei` ='" . $imei . "' LIMIT 1;";
+        $existingUserIdArray = $this->getDatabaseHandler()->executeQuery($existingUserIdQuery);
+        if (!empty($existingUserIdArray)) {
+            return $existingUserIdArray[0]['id'];
+        } else {
+            return null;
+        }
+    }
+
     public function getReverseGeoCodingLocationDetails($latitude, $longitude) {
         $url = "http://maps.googleapis.com/maps/api/geocode/json?latlng=" . $latitude . "," . $longitude . "&sensor=true";
         $data = @file_get_contents($url);
@@ -114,17 +124,29 @@ class NoiseDataService {
         }
     }
 
+    public function saveCurrentUser($imei) {
+        $userInsertQuery = "INSERT INTO `cdme_user` (`imei`) VALUES ('" . $imei . "');";
+        $this->getDatabaseHandler()->executeQuery($userInsertQuery);
+        return true;
+    }
+
     protected function createDataUploadQuery($data) {
         $rawData = $data['rawdata'];
-        $existingLocationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
-        if ($existingLocationId) {
-            $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES (NULL,'" . $existingLocationId . "', '" . $rawData['noise_level'] . "','" . $rawData['date_time'] . "');";
-        } else {
-            $result = $this->saveCurrentLocation($rawData['longitude'], $rawData['latitude']);
-            if ($result) {
-                $newLocationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
-                $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES (NULL, '" . $newLocationId . "', '" . $rawData['noise_level'] . "','" . $rawData['date_time'] . "');";
-            }
+        $metaData = $data['metadata'];
+        switch ($metaData['feature']) {
+            case 'noiseData':
+                $locationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
+                $userId = $this->isExistingUser($metaData['imei']);
+                if (!$locationId) {
+                    $result = $this->saveCurrentLocation($rawData['longitude'], $rawData['latitude']);
+                    $locationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
+                }
+                if (!$userId) {
+                    $result = $this->saveCurrentUser($metaData['imei']);
+                    $userId = $this->isExistingUser($metaData['imei']);
+                }
+                $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES ('" . $userId . "','" . $locationId . "', '" . $rawData['noise_level'] . "','" . $rawData['date_time'] . "');";
+                break;
         }
         return $dataInsertQuery;
     }
@@ -137,7 +159,7 @@ class NoiseDataService {
                 $query = "SELECT * FROM `cdme_noise_data` LEFT JOIN `cdme_location` ON `cdme_noise_data`.`location_id` = `cdme_location`.`id` ORDER BY `cdme_noise_data`.`date_time` ASC;";
                 break;
             case 'adminRegionStatistics':
-                $query = 'SELECT * FROM `cdme_admin_'.$rawData['region_level'].'_region_statistics` WHERE `region_id`='.$rawData['region_id'].';';
+                $query = 'SELECT * FROM `cdme_admin_' . $rawData['region_level'] . '_region_statistics` WHERE `region_id`=' . $rawData['region_id'] . ';';
                 break;
         }
         return $query;
