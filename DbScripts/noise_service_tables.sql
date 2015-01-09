@@ -47,6 +47,17 @@ CREATE TABLE IF NOT EXISTS `cdme_admin_2_region_statistics` (
 PRIMARY KEY(`id`))
 ENGINE = INNODB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `cdme_location_point_statistics` (
+`id` BIGINT NOT NULL AUTO_INCREMENT,
+`location_id` BIGINT NOT NULL,
+`mod` TEXT,
+`median` TEXT,
+`mean` TEXT,
+`sd` TEXT,
+`date_time` TEXT,
+PRIMARY KEY(`id`))
+ENGINE = INNODB DEFAULT CHARSET=utf8;
+
 ALTER TABLE `cdme_location`
 ADD CONSTRAINT FOREIGN KEY (`admin_1_region_id`) REFERENCES `cdme_admin_1_region`(`id`)
 ON UPDATE CASCADE
@@ -69,5 +80,10 @@ ON DELETE CASCADE;
 
 ALTER TABLE `cdme_admin_2_region_statistics`
 ADD CONSTRAINT FOREIGN KEY (`region_id`) REFERENCES `cdme_admin_2_region`(`id`)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+ALTER TABLE `cdme_location_point_statistics`
+ADD CONSTRAINT FOREIGN KEY (`location_id`) REFERENCES `cdme_location`(`id`)
 ON UPDATE CASCADE
 ON DELETE CASCADE;

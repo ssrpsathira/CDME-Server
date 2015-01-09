@@ -12,21 +12,9 @@
  * @author ssrp
  */
 require_once dirname(__FILE__) . '/../Engine/DatabaseHandler.php';
+require_once dirname(__FILE__) . '/BaseCdmeService.php';
 
-class NoiseDataService {
-
-    protected $databaseHandler;
-
-    public function __construct() {
-        
-    }
-
-    public function getDatabaseHandler() {
-        if (!$this->databaseHandler) {
-            $this->databaseHandler = new DatabaseHandler();
-        }
-        return $this->databaseHandler;
-    }
+class NoiseDataService extends BaseCdmeService {
 
     public function isExistingLocation($longitude, $latitude) {
         $existingLocationIdQuery = 'SELECT `id` FROM `cdme_location` WHERE `longitude`=' . $longitude . " AND `latitude`=" . $latitude . ' LIMIT 1;';
@@ -160,6 +148,24 @@ class NoiseDataService {
                 break;
             case 'adminRegionStatistics':
                 $query = 'SELECT * FROM `cdme_admin_' . $rawData['region_level'] . '_region_statistics` WHERE `region_id`=' . $rawData['region_id'] . ';';
+                break;
+            case 'latestLocationStatistics':
+                $query = 'SELECT p1.*
+                            FROM `cdme_location_point_statistics` p1
+                            INNER JOIN
+                            (
+                                SELECT max(`date_time`) MaxDateTime, `location_id`
+                                FROM `cdme_location_point_statistics`
+                                GROUP BY `location_id`
+                            ) p2
+                            ON p1.`location_id` = p2.`location_id`
+                            AND p1.`date_time` = p2.MaxDateTime
+                            LEFT JOIN `cdme_location` r ON r.`id` = p1.`location_id`
+                            WHERE p1.`location_id` = ' . $rawData['location_id'] . '
+                            ORDER BY p1.`location_id`;';
+                break;
+            case 'overallLocationStatistics':
+                $query = 'SELECT * FROM `cdme_location_point_statistics` WHERE `location_id` = ' . $rawData['location_id'] . ' ORDER BY `date_time`;';
                 break;
         }
         return $query;

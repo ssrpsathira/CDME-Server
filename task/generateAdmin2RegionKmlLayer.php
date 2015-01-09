@@ -14,7 +14,7 @@ INNER JOIN
   ON p1.`region_id` = p2.`region_id`
   AND p1.`date_time` = p2.MaxDateTime
 LEFT JOIN `cdme_admin_2_region` r ON r.`id` = p1.`region_id`
-order by p1.region_id;";
+ORDER BY p1.`region_id`;";
 $results = $dbHandler->executeQuery($getStatisticalDataQuery);
 $kmlStyleText = '';
 $placeMarkText = '';
