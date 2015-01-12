@@ -18,6 +18,10 @@ class BaseCdmeService {
     protected $databaseHandler;
     const EARTH_RADIUS = 6371000;
 
+    /**
+     * 
+     * @return DatabaseHandler
+     */
     public function getDatabaseHandler() {
         if (!$this->databaseHandler) {
             $this->databaseHandler = new DatabaseHandler();
