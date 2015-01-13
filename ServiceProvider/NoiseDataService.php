@@ -187,10 +187,13 @@ class NoiseDataService extends BaseCdmeService {
 
             $variance = 0.0;
             foreach ($regionNoiseValues as $i) {
+                $size = 0;
+                if($i){
+                    $size += 1;
+                }
                 $variance += pow($i - $mean, 2);
             }
-            $size = count($regionNoiseValues) - 1;
-            if ($size > 0) {
+            if ($size > 1) {
                 $sd = (float) sqrt($variance) / sqrt($size);
             } else {
                 $sd = 0;
