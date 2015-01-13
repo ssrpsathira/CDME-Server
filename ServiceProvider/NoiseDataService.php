@@ -186,9 +186,9 @@ class NoiseDataService extends BaseCdmeService {
             $median = $regionNoiseValues[$middle - 1];
 
             $variance = 0.0;
+            $size = 0;
             foreach ($regionNoiseValues as $i) {
-                $size = 0;
-                if($i){
+                if ($i != null) {
                     $size += 1;
                 }
                 $variance += pow($i - $mean, 2);
@@ -322,6 +322,74 @@ class NoiseDataService extends BaseCdmeService {
         return 'success';
     }
 
+    public function getAdminRegionStatistics($rawData) {
+        $fromDate = ($rawData['from_date']) ? strtotime($rawData['from_date']) : 0;
+        $toDate = ($rawData['to_date']) ? strtotime($rawData['to_date']) : 0;
+        $samplingRate = ($rawData['sampling_rate']) ? $rawData['sampling_rate'] : '1 day';
+        if ($fromDate == 0 && $toDate == 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        } elseif ($fromDate == 0 && $toDate != 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+        } elseif ($fromDate != 0 && $toDate == 0) {
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        }
+        $incrementedDate = strtotime(date('Y-m-d H:i:s', $fromDate) . ' + ' . $samplingRate);
+        $statisticsArray = array();
+        while ($incrementedDate <= $toDate) {
+            $newFromDate = strtotime(date('Y-m-d H:i:s', $incrementedDate) . ' - ' . $samplingRate);
+            $noiseDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_" . $rawData['region_level'] . "_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND (n.`date_time` >= $newFromDate AND n.`date_time` <= $incrementedDate) WHERE r2.`id` = " . $rawData['region_id'] . ";";
+            $result = $this->getDatabaseHandler()->executeQuery($noiseDataQuery);
+            $noiseLevels = array();
+            foreach ($result as $set) {
+                if ($set['noise_level']) {
+                    $noiseLevels[] = $set['noise_level'];
+                }
+            }
+            if (count($noiseLevels) > 0) {
+                $mean = array_sum($noiseLevels) / count($noiseLevels);
+
+                $ar = array_replace($noiseLevels, array_fill_keys(array_keys($noiseLevels, null), ''));
+                $count = array_count_values($ar);
+                $mod = array_search(max($count), $count);
+
+                $middle = round(count($noiseLevels) / 2);
+                $median = $noiseLevels[$middle - 1];
+
+                $variance = 0.0;
+                $size = 0;
+                foreach ($noiseLevels as $i) {
+                    if ($i != null) {
+                        $size += 1;
+                    }
+                    $variance += pow($i - $mean, 2);
+                }
+                if ($size > 1) {
+                    $sd = (float) sqrt($variance) / sqrt($size);
+                } else {
+                    $sd = 0;
+                }
+            } else {
+                $mean = 0;
+                $median = null;
+                $mod = null;
+                $sd = 0;
+            }
+            $statisticsArray[] = array('date_time' => $incrementedDate, 'mean' => $mean, 'median' => $median, 'mod' => $mod, 'sd' => $sd);
+            $incrementedDate = strtotime(date('Y-m-d H:i:s', $incrementedDate) . ' + ' . $samplingRate);
+        }
+        return $statisticsArray;
+    }
+
     public function getFeatureWiseData($data) {
         $metaData = $data['metadata'];
         $rawData = $data['rawdata'];
@@ -334,8 +402,7 @@ class NoiseDataService extends BaseCdmeService {
                 $results = $this->getDatabaseHandler()->executeQuery($query);
                 break;
             case 'adminRegionStatistics':
-                $query = 'SELECT * FROM `cdme_admin_' . $rawData['region_level'] . '_region_statistics` WHERE `region_id`=' . $rawData['region_id'] . ';';
-                $results = $this->getDatabaseHandler()->executeQuery($query);
+                $results = $this->getAdminRegionStatistics($rawData);
                 break;
             case 'latestLocationStatistics':
                 $query = 'SELECT p1.*
