@@ -153,6 +153,7 @@ class NoiseDataService extends BaseCdmeService {
     public function generateAdmin2RegionKmzLayer($param, $imei) {
         $fromDate = ($param['from_date']) ? strtotime($param['from_date']) : 0;
         $toDate = ($param['to_date']) ? strtotime($param['to_date']) : 0;
+        $timeStamp = $param['time_stamp'];
 
         if ($fromDate == 0 && $toDate == 0) {
             $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id`;";
@@ -302,20 +303,21 @@ class NoiseDataService extends BaseCdmeService {
         }
         $kmlText = str_replace(array('{styles}', '{placemarks}'), array($kmlStyleText, $placeMarkText), file_get_contents(dirname(__FILE__) . '/../kml/templates/kml_template.txt'));
 
-        $path = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '.kml';
-        $zipArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '.zip';
-        $kmzArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '.kmz';
+        foreach (glob(dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '*') as $filename) {
+            unlink($filename);
+        }
+        $path = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kml';
+        $zipArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.zip';
+        $kmzArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kmz';
 
         file_put_contents($path, $kmlText);
 
         $zipArchive = new ZipArchive();
-        if (file_exists($zipArchivePath)) {
-            unlink($zipArchivePath);
-        }
+
         if ($zipArchive->open($zipArchivePath, ZIPARCHIVE::CREATE) != TRUE) {
             die("Could not open archive");
         }
-        $zipArchive->addFile($path, 'admin_2_regions_' . $imei . '.kml');
+        $zipArchive->addFile($path, 'admin_2_regions_' . $imei . '_' . $timeStamp . '.kml');
 // close and save archive
         $zipArchive->close();
         rename($zipArchivePath, $kmzArchivePath);
@@ -390,6 +392,30 @@ class NoiseDataService extends BaseCdmeService {
         return $statisticsArray;
     }
 
+    public function downloadAllLocationPoints($rawData) {
+        $fromDate = ($rawData['from_date']) ? strtotime($rawData['from_date']) : 0;
+        $toDate = ($rawData['to_date']) ? strtotime($rawData['to_date']) : 0;
+        if ($fromDate == 0 && $toDate == 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        } elseif ($fromDate == 0 && $toDate != 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+        } elseif ($fromDate != 0 && $toDate == 0) {
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        }
+        $locationQuery = "SELECT * FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON n.`location_id` = l.`id` WHERE n.`date_time` >= $fromDate AND n.`date_time` <= $toDate ORDER BY n.`date_time` ASC;";
+        return $this->getDatabaseHandler()->executeQuery($locationQuery);
+    }
+
     public function getFeatureWiseData($data) {
         $metaData = $data['metadata'];
         $rawData = $data['rawdata'];
@@ -398,8 +424,7 @@ class NoiseDataService extends BaseCdmeService {
                 $results = $this->generateAdmin2RegionKmzLayer($rawData, $metaData['imei']);
                 break;
             case 'allLocations':
-                $query = "SELECT * FROM `cdme_noise_data` LEFT JOIN `cdme_location` ON `cdme_noise_data`.`location_id` = `cdme_location`.`id` ORDER BY `cdme_noise_data`.`date_time` ASC;";
-                $results = $this->getDatabaseHandler()->executeQuery($query);
+                $results = $this->downloadAllLocationPoints($rawData);
                 break;
             case 'adminRegionStatistics':
                 $results = $this->getAdminRegionStatistics($rawData);
