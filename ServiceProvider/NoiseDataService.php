@@ -358,6 +358,7 @@ class NoiseDataService extends BaseCdmeService {
                 }
             }
             if (count($noiseLevels) > 0) {
+                sort($noiseLevels);
                 $mean = array_sum($noiseLevels) / count($noiseLevels);
 
                 $ar = array_replace($noiseLevels, array_fill_keys(array_keys($noiseLevels, null), ''));
@@ -416,6 +417,128 @@ class NoiseDataService extends BaseCdmeService {
         return $this->getDatabaseHandler()->executeQuery($locationQuery);
     }
 
+    public function getLocationStatistics($rawData) {
+        $locationId = $rawData['location_id'];
+        $fromDate = ($rawData['from_date']) ? strtotime($rawData['from_date']) : 0;
+        $toDate = ($rawData['to_date']) ? strtotime($rawData['to_date']) : 0;
+        $displacementRange = $rawData['displacement_range'];
+        if ($fromDate == 0 && $toDate == 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        } elseif ($fromDate == 0 && $toDate != 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+        } elseif ($fromDate != 0 && $toDate == 0) {
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        }
+        $allLocationQuery = "SELECT * FROM `cdme_location`;";
+        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = $locationId";
+        $result = $this->getDatabaseHandler()->executeQuery($specificLocationQuery);
+        $specificLocation = $result[0];
+        $closeLocationArray[] = $specificLocation;
+        $result = $this->getDatabaseHandler()->executeQuery($allLocationQuery);
+        foreach ($result as $location) {
+            $distance = $this->getDisplacement(array('lat' => $specificLocation['latitude'], 'long' => $specificLocation['longitude']), array('lat' => $location['latitude'], 'long' => $location['longitude']));
+            if ($distance <= $displacementRange && $location != $specificLocation) {
+                $closeLocationArray[] = $location;
+            }
+        }
+        $noiseLevelArray = array();
+        foreach ($closeLocationArray as $location) {
+            $id = $location['id'];
+            $locationNoiseQuery = "SELECT n.`noise_level` FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate);";
+            $result = $this->getDatabaseHandler()->executeQuery($locationNoiseQuery);
+            foreach ($result as $noiseLevel) {
+                $noiseLevelArray[] = $noiseLevel['noise_level'];
+            }
+        }
+        if (count($noiseLevelArray) > 0) {
+            sort($noiseLevelArray);
+            $mean = array_sum($noiseLevelArray) / count($noiseLevelArray);
+
+            $ar = array_replace($noiseLevelArray, array_fill_keys(array_keys($noiseLevelArray, null), ''));
+            $count = array_count_values($ar);
+            $mod = array_search(max($count), $count);
+
+            $middle = round(count($noiseLevelArray) / 2);
+            $median = $noiseLevelArray[$middle - 1];
+
+            $variance = 0.0;
+            $size = 0;
+            foreach ($noiseLevelArray as $i) {
+                if ($i != null) {
+                    $size += 1;
+                }
+                $variance += pow($i - $mean, 2);
+            }
+            if ($size > 1) {
+                $sd = (float) sqrt($variance) / sqrt($size);
+            } else {
+                $sd = 0;
+            }
+        } else {
+            $mean = 0;
+            $median = null;
+            $mod = null;
+            $sd = 0;
+        }
+        return array('mean' => $mean, 'median' => $median, 'mod' => $mod, 'sd' => $sd);
+    }
+
+    public function getLocationNoiseValues($rawData) {
+        $locationId = $rawData['location_id'];
+        $fromDate = ($rawData['from_date']) ? strtotime($rawData['from_date']) : 0;
+        $toDate = ($rawData['to_date']) ? strtotime($rawData['to_date']) : 0;
+        $displacementRange = $rawData['displacement_range'];
+        if ($fromDate == 0 && $toDate == 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        } elseif ($fromDate == 0 && $toDate != 0) {
+            $minFromDateaQuery = "SELECT `id`, MIN(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($minFromDateaQuery);
+            $fromDate = $result[0][1];
+        } elseif ($fromDate != 0 && $toDate == 0) {
+            $maxToDateQuery = "SELECT `id`, MAX(`date_time`) FROM `cdme_noise_data`;";
+            $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
+            $toDate = $result[0][1];
+        }
+        $allLocationQuery = "SELECT * FROM `cdme_location`;";
+        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = $locationId";
+        $result = $this->getDatabaseHandler()->executeQuery($specificLocationQuery);
+        $specificLocation = $result[0];
+        $closeLocationArray[] = $specificLocation;
+        $result = $this->getDatabaseHandler()->executeQuery($allLocationQuery);
+        foreach ($result as $location) {
+            $distance = $this->getDisplacement(array('lat' => $specificLocation['latitude'], 'long' => $specificLocation['longitude']), array('lat' => $location['latitude'], 'long' => $location['longitude']));
+            if ($distance <= $displacementRange && $location != $specificLocation) {
+                $closeLocationArray[] = $location;
+            }
+        }
+        $noiseLevelDistributionArray = array();
+        foreach ($closeLocationArray as $location) {
+            $id = $location['id'];
+            $locationNoiseQuery = "SELECT n.`date_time`, n.`noise_level` FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate);";
+            $result = $this->getDatabaseHandler()->executeQuery($locationNoiseQuery);
+            foreach ($result as $noiseLevel) {
+                $noiseLevelDistributionArray[] = array('date_time' => $noiseLevel['date_time'], 'noise_level' => $noiseLevel['noise_level']);
+            }
+        }
+        return $noiseLevelDistributionArray;
+    }
+
     public function getFeatureWiseData($data) {
         $metaData = $data['metadata'];
         $rawData = $data['rawdata'];
@@ -430,24 +553,10 @@ class NoiseDataService extends BaseCdmeService {
                 $results = $this->getAdminRegionStatistics($rawData);
                 break;
             case 'latestLocationStatistics':
-                $query = 'SELECT p1.*
-                            FROM `cdme_location_point_statistics` p1
-                            INNER JOIN
-                            (
-                                SELECT max(`date_time`) MaxDateTime, `location_id`
-                                FROM `cdme_location_point_statistics`
-                                GROUP BY `location_id`
-                            ) p2
-                            ON p1.`location_id` = p2.`location_id`
-                            AND p1.`date_time` = p2.MaxDateTime
-                            LEFT JOIN `cdme_location` r ON r.`id` = p1.`location_id`
-                            WHERE p1.`location_id` = ' . $rawData['location_id'] . '
-                            ORDER BY p1.`location_id`;';
-                $results = $this->getDatabaseHandler()->executeQuery($query);
+                $results = $this->getLocationStatistics($rawData);
                 break;
             case 'overallLocationStatistics':
-                $query = 'SELECT * FROM `cdme_location_point_statistics` WHERE `location_id` = ' . $rawData['location_id'] . ' ORDER BY `date_time`;';
-                $results = $this->getDatabaseHandler()->executeQuery($query);
+                $results = $this->getLocationNoiseValues($rawData);
                 break;
         }
         return $results;
