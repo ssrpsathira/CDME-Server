@@ -530,10 +530,10 @@ class NoiseDataService extends BaseCdmeService {
         $noiseLevelDistributionArray = array();
         foreach ($closeLocationArray as $location) {
             $id = $location['id'];
-            $locationNoiseQuery = "SELECT n.`date_time`, n.`noise_level` FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate);";
+            $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate) GROUP BY n.`date_time`;";
             $result = $this->getDatabaseHandler()->executeQuery($locationNoiseQuery);
             foreach ($result as $noiseLevel) {
-                $noiseLevelDistributionArray[] = array('date_time' => $noiseLevel['date_time'], 'noise_level' => $noiseLevel['noise_level']);
+                $noiseLevelDistributionArray[] = array('date_time' => $noiseLevel['date_time'], 'noise_level' => $noiseLevel['AVG(n.`noise_level`)']);
             }
         }
         return $noiseLevelDistributionArray;
