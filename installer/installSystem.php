@@ -70,4 +70,3 @@ if (mysqli_multi_query($conn, $sql)) {
 }
 
 $conn->close();
-?>

@@ -7,4 +7,3 @@ $serviceFactory = new ServiceFactory();
 $result = $serviceFactory->processData($rawData);
 
 echo $result;
-?>

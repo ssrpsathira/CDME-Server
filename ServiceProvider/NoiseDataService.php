@@ -17,8 +17,8 @@ require_once dirname(__FILE__) . '/BaseCdmeService.php';
 class NoiseDataService extends BaseCdmeService {
 
     public function isExistingLocation($longitude, $latitude) {
-        $existingLocationIdQuery = 'SELECT `id` FROM `cdme_location` WHERE `longitude`=' . $longitude . " AND `latitude`=" . $latitude . ' LIMIT 1;';
-        $existingLocationIdArray = $this->getDatabaseHandler()->executeQuery($existingLocationIdQuery);
+        $existingLocationIdQuery = 'SELECT `id` FROM `cdme_location` WHERE `longitude`=? AND `latitude`=? LIMIT 1;';
+        $existingLocationIdArray = $this->getDatabaseHandler()->executeQueryWithParams($existingLocationIdQuery, array($longitude, $latitude));
         if (!empty($existingLocationIdArray)) {
             return $existingLocationIdArray[0]['id'];
         } else {
@@ -27,8 +27,8 @@ class NoiseDataService extends BaseCdmeService {
     }
 
     public function isExistingUser($imei) {
-        $existingUserIdQuery = "SELECT `id` FROM `cdme_user` WHERE `imei` ='" . $imei . "' LIMIT 1;";
-        $existingUserIdArray = $this->getDatabaseHandler()->executeQuery($existingUserIdQuery);
+        $existingUserIdQuery = "SELECT `id` FROM `cdme_user` WHERE `imei` =? LIMIT 1;";
+        $existingUserIdArray = $this->getDatabaseHandler()->executeQueryWithParams($existingUserIdQuery, array($imei));
         if (!empty($existingUserIdArray)) {
             return $existingUserIdArray[0]['id'];
         } else {
@@ -89,14 +89,14 @@ class NoiseDataService extends BaseCdmeService {
     }
 
     public function getAdmin2RegionIdByName($admin2RegionName) {
-        $getAdmin2RegionIdQuery = 'SELECT `id` FROM `cdme_admin_2_region` WHERE `name`=\'' . trim($admin2RegionName) . '\'';
-        $result = $this->getDatabaseHandler()->executeQuery($getAdmin2RegionIdQuery);
+        $getAdmin2RegionIdQuery = 'SELECT `id` FROM `cdme_admin_2_region` WHERE `name`=?';
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($getAdmin2RegionIdQuery, array(trim($admin2RegionName)));
         return $result[0]['id'];
     }
 
     public function getAdmin1RegionIdByName($admin1RegionName) {
-        $getAdmin1RegionIdQuery = 'SELECT `id` FROM `cdme_admin_1_region` WHERE `name`=\'' . trim($admin1RegionName) . '\'';
-        $result = $this->getDatabaseHandler()->executeQuery($getAdmin1RegionIdQuery);
+        $getAdmin1RegionIdQuery = 'SELECT `id` FROM `cdme_admin_1_region` WHERE `name`=?';
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($getAdmin1RegionIdQuery, array(trim($admin1RegionName)));
         return $result[0]['id'];
     }
 
@@ -104,18 +104,15 @@ class NoiseDataService extends BaseCdmeService {
         $admin2RegionId = $this->obtainAdmin2RegionIdByLatLong($latitude, $longitude);
         $admin1RegionId = $this->obtainAdmin1RegionIdByLatLong($latitude, $longitude);
         if (!empty($admin1RegionId) && !empty($admin2RegionId)) {
-            $locationInsertQuery = "INSERT INTO `cdme_location` (`longitude`, `latitude`, `admin_2_region_id`,`admin_1_region_id`) VALUES (" . $longitude . "," . $latitude . "," . $admin2RegionId . "," . $admin1RegionId . ");";
-            $this->getDatabaseHandler()->executeQuery($locationInsertQuery);
-            return true;
-        } else {
-            return false;
+            $locationInsertQuery = "INSERT INTO `cdme_location` (`longitude`, `latitude`, `admin_2_region_id`,`admin_1_region_id`) VALUES (?, ?, ?, ?);";
+            return $this->getDatabaseHandler()->executeQueryWithParams($locationInsertQuery, array($longitude, $latitude, $admin2RegionId, $admin1RegionId), true) === 1;
         }
+        return false;
     }
 
     public function saveCurrentUser($imei) {
-        $userInsertQuery = "INSERT INTO `cdme_user` (`imei`) VALUES ('" . $imei . "');";
-        $this->getDatabaseHandler()->executeQuery($userInsertQuery);
-        return true;
+        $userInsertQuery = "INSERT INTO `cdme_user` (`imei`) VALUES (?);";
+        return $this->getDatabaseHandler()->executeQueryWithParams($userInsertQuery, array($imei), true) === 1;
     }
 
     protected function createDataUploadQuery($data) {
@@ -126,22 +123,25 @@ class NoiseDataService extends BaseCdmeService {
                 $locationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
                 $userId = $this->isExistingUser($metaData['imei']);
                 if (!$locationId) {
-                    $result = $this->saveCurrentLocation($rawData['longitude'], $rawData['latitude']);
+                    $this->saveCurrentLocation($rawData['longitude'], $rawData['latitude']);
                     $locationId = $this->isExistingLocation($rawData['longitude'], $rawData['latitude']);
                 }
                 if (!$userId) {
-                    $result = $this->saveCurrentUser($metaData['imei']);
+                    $this->saveCurrentUser($metaData['imei']);
                     $userId = $this->isExistingUser($metaData['imei']);
                 }
-                $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES ('" . $userId . "','" . $locationId . "', '" . $rawData['noise_level'] . "','" . $rawData['date_time'] . "');";
+                $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES (?,?,?,?);";
+                $params = array($userId, $locationId, $rawData['noise_level'], $rawData['date_time']);
                 break;
+            default:
+                throw new Exception('Fetaure requested is not yet implemented.');
         }
-        return $dataInsertQuery;
+        return array($dataInsertQuery, $params);
     }
 
     public function initializeDataUploadService($data) {
-        $uploadQuery = $this->createDataUploadQuery($data);
-        $results = $this->getDatabaseHandler()->executeQuery($uploadQuery);
+        list($uploadQuery, $params) = $this->createDataUploadQuery($data);
+        $results = $this->getDatabaseHandler()->executeQueryWithParams($uploadQuery, $params);
         return json_encode($results);
     }
 
@@ -158,13 +158,16 @@ class NoiseDataService extends BaseCdmeService {
         if ($fromDate == 0 && $toDate == 0) {
             $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id`;";
         } elseif ($fromDate == 0 && $toDate != 0) {
-            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND n.`date_time` <= $toDate ;";
+            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND n.`date_time` <= ? ;";
+            $parameters = array($toDate);
         } elseif ($fromDate != 0 && $toDate == 0) {
-            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND n.`date_time` >= $fromDate ;";
+            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND n.`date_time` >= ? ;";
+            $parameters = array($fromDate);
         } elseif ($fromDate != 0 && $toDate != 0) {
-            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate);";
+            $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND (n.`date_time` >= ? AND n.`date_time` <= ?);";
+            $parameters = array($fromDate, $toDate);
         }
-        $result = $this->getDatabaseHandler()->executeQuery($overallDataQuery);
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($overallDataQuery, $parameters);
         foreach ($result as $set) {
             if (empty($regionNoiseArray[$set['id']])) {
                 $regionNoiseArray[$set['id']] = array();
@@ -349,8 +352,9 @@ class NoiseDataService extends BaseCdmeService {
         $statisticsArray = array();
         while ($incrementedDate <= $toDate) {
             $newFromDate = strtotime(date('Y-m-d H:i:s', $incrementedDate) . ' - ' . $samplingRate);
-            $noiseDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_" . $rawData['region_level'] . "_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND (n.`date_time` >= $newFromDate AND n.`date_time` <= $incrementedDate) WHERE r2.`id` = " . $rawData['region_id'] . ";";
-            $result = $this->getDatabaseHandler()->executeQuery($noiseDataQuery);
+            $noiseDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_" . $rawData['region_level'] . "_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id` AND (n.`date_time` >= ? AND n.`date_time` <= ?) WHERE r2.`id` = ?;";
+            $parameters = array($newFromDate, $incrementedDate, $rawData['region_id']);
+            $result = $this->getDatabaseHandler()->executeQueryWithParams($noiseDataQuery, $parameters);
             $noiseLevels = array();
             foreach ($result as $set) {
                 if ($set['noise_level']) {
@@ -413,8 +417,9 @@ class NoiseDataService extends BaseCdmeService {
             $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
             $toDate = $result[0][1];
         }
-        $locationQuery = "SELECT * FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON n.`location_id` = l.`id` WHERE n.`date_time` >= $fromDate AND n.`date_time` <= $toDate ORDER BY n.`date_time` ASC;";
-        return $this->getDatabaseHandler()->executeQuery($locationQuery);
+        $locationQuery = "SELECT * FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON n.`location_id` = l.`id` WHERE n.`date_time` >= ? AND n.`date_time` <= ? ORDER BY n.`date_time` ASC;";
+        $parameters = array($fromDate, $toDate);
+        return $this->getDatabaseHandler()->executeQueryWithParams($locationQuery, $parameters);
     }
 
     public function getLocationStatistics($rawData) {
@@ -440,8 +445,9 @@ class NoiseDataService extends BaseCdmeService {
             $toDate = $result[0][1];
         }
         $allLocationQuery = "SELECT * FROM `cdme_location`;";
-        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = $locationId";
-        $result = $this->getDatabaseHandler()->executeQuery($specificLocationQuery);
+        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = ?;";
+        $parameters = array($locationId);
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($specificLocationQuery, $parameters);
         $specificLocation = $result[0];
         $closeLocationArray[] = $specificLocation;
         $result = $this->getDatabaseHandler()->executeQuery($allLocationQuery);
@@ -454,8 +460,9 @@ class NoiseDataService extends BaseCdmeService {
         $noiseLevelArray = array();
         foreach ($closeLocationArray as $location) {
             $id = $location['id'];
-            $locationNoiseQuery = "SELECT n.`noise_level` FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate);";
-            $result = $this->getDatabaseHandler()->executeQuery($locationNoiseQuery);
+            $locationNoiseQuery = "SELECT n.`noise_level` FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = ? AND (n.`date_time` >= ? AND n.`date_time` <= ?);";
+            $parameters = array($id, $fromDate, $toDate);
+            $result = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters);
             foreach ($result as $noiseLevel) {
                 $noiseLevelArray[] = $noiseLevel['noise_level'];
             }
@@ -516,8 +523,9 @@ class NoiseDataService extends BaseCdmeService {
             $toDate = $result[0][1];
         }
         $allLocationQuery = "SELECT * FROM `cdme_location`;";
-        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = $locationId";
-        $result = $this->getDatabaseHandler()->executeQuery($specificLocationQuery);
+        $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = ?;";
+        $parameters = array($locationId);
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($specificLocationQuery, $parameters);
         $specificLocation = $result[0];
         $closeLocationArray[] = $specificLocation;
         $result = $this->getDatabaseHandler()->executeQuery($allLocationQuery);
@@ -530,8 +538,9 @@ class NoiseDataService extends BaseCdmeService {
         $noiseLevelDistributionArray = array();
         foreach ($closeLocationArray as $location) {
             $id = $location['id'];
-            $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = $id AND (n.`date_time` >= $fromDate AND n.`date_time` <= $toDate) GROUP BY n.`date_time`;";
-            $result = $this->getDatabaseHandler()->executeQuery($locationNoiseQuery);
+            $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = ? AND (n.`date_time` >= ? AND n.`date_time` <= ?) GROUP BY n.`date_time`;";
+            $parameters = array($id, $fromDate, $toDate);
+            $result = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters);
             foreach ($result as $key => $noiseLevel) {
                 $dateTime[$key] = (Integer) $noiseLevel['date_time'];
                 $noiseLevelDistributionArray[$key] = array('date_time' => $noiseLevel['date_time'], 'noise_level' => $noiseLevel['AVG(n.`noise_level`)']);
@@ -560,6 +569,8 @@ class NoiseDataService extends BaseCdmeService {
             case 'overallLocationStatistics':
                 $results = $this->getLocationNoiseValues($rawData);
                 break;
+            default :
+                throw new Exception('Fetaure requested is not yet implemented.');
         }
         return $results;
     }

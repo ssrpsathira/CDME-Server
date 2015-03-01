@@ -28,7 +28,15 @@ class BaseCdmeService {
         }
         return $this->databaseHandler;
     }
-
+    
+    /**
+     * 
+     * @param DatabaseHandler $databaseHandler
+     */
+    public function setDatabaseHandler(DatabaseHandler $databaseHandler) {
+        $this->databaseHandler = $databaseHandler;
+    }
+    
     public function getDisplacement($location1, $location2) {
         // convert from degrees to radians
         $latFrom = deg2rad($location1['lat']);

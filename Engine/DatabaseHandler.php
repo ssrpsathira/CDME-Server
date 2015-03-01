@@ -19,6 +19,21 @@ class DatabaseHandler {
     protected $password = DatabaseConfig::PASSWORD;
     protected $dbName = DatabaseConfig::DB_NAME;
     protected $dbConnection;
+    
+    public function __construct($host = null, $username = null, $password = null, $dbName = null) {
+        if (!is_null($host)) {
+            $this->host = $host;
+        }
+        if (!is_null($username)) {
+            $this->username = $username;
+        }
+        if (!is_null($password)) {
+            $this->password = $password;
+        }
+        if (!is_null($dbName)) {
+            $this->dbName = $dbName;
+        }
+    }
 
     /**
      * 
@@ -35,6 +50,14 @@ class DatabaseHandler {
             }
         }
         return $this->dbConnection;
+    }
+    
+    public function executeQueryWithParams($query, $params = array(), $returnCount = false) {
+        $sth = $this->getDatabaseConnection()->prepare($query);
+        if ($sth->execute($params)) {
+            return $returnCount ? $sth->rowCount() : $sth->fetchAll();
+        }
+        return null;
     }
 
     public function executeQuery($sqlQuery) {
