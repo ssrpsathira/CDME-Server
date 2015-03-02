@@ -17,7 +17,7 @@ class ConfigService {
 
     protected $databaseHandler;
     
-    protected function getDatabaseHandler() {
+    public function getDatabaseHandler() {
         if (!$this->databaseHandler) {
             $this->databaseHandler = new DatabaseHandler();
         }
