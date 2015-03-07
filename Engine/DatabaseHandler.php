@@ -19,7 +19,7 @@ class DatabaseHandler {
     protected $password = DatabaseConfig::PASSWORD;
     protected $dbName = DatabaseConfig::DB_NAME;
     protected $dbConnection;
-    
+
     public function __construct($host = null, $username = null, $password = null, $dbName = null) {
         if (!is_null($host)) {
             $this->host = $host;
@@ -51,13 +51,17 @@ class DatabaseHandler {
         }
         return $this->dbConnection;
     }
-    
+
     public function executeQueryWithParams($query, $params = array(), $returnCount = false) {
-        $sth = $this->getDatabaseConnection()->prepare($query);
-        if ($sth->execute($params)) {
-            return $returnCount ? $sth->rowCount() : $sth->fetchAll();
+        try {
+            $sth = $this->getDatabaseConnection()->prepare($query);
+            if ($sth->execute($params)) {
+                return $returnCount ? $sth->rowCount() : $sth->fetchAll();
+            }
+            return null;
+        } catch (PDOException $ex) {
+            
         }
-        return null;
     }
 
     public function executeQuery($sqlQuery) {
@@ -70,7 +74,7 @@ class DatabaseHandler {
             }
             return null;
         } catch (PDOException $e) {
-           
+            
         }
     }
 

@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../ServiceProvider/NoiseDataService.php';
+require_once __DIR__ . '/TestUtility.php';
+
 /**
  * Description of NoiseDataServiceTest
  *
@@ -9,13 +11,16 @@ require_once __DIR__ . '/../ServiceProvider/NoiseDataService.php';
 class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
 
     private $noiseDataService = null;
+    private $testUtility = null;
 
-    public static function setUpBeforeClass() {        
+    public static function setUpBeforeClass() {
         //require_once __DIR__ . '/TestUtility.php';
     }
 
     protected function setUp() {
         $this->noiseDataService = new NoiseDataService();
+        $this->noiseDataService->setDatabaseHandler(new DatabaseHandler(null, null, null, DatabaseConfig::TEST_DB_NAME));
+        $this->testUtility = TestUtility::getInstance();
     }
 
     public function testIsExistingLocation_NonExistingLocation() {
@@ -64,8 +69,12 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $this->noiseDataService->isExistingUser($imei));
     }
 
-    // there should be tests for getReverseGeoCodingLocationDetails
-
+//    public function testGetReverseGeoCodingLocationDetails(){
+//        $longitude = 79.90380;
+//        $latitude = 6.79533;
+//        $result = $this->noiseDataService->getReverseGeoCodingLocationDetails($latitude, $longitude);
+//        var_dump($result);die;
+//    }
 
     public function adminRegion1DataProvider() {
         return array(
@@ -173,7 +182,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $mockNoiseDataService->setDatabaseHandler($mockDbHandler);
         $this->assertTrue($mockNoiseDataService->saveCurrentLocation($longitude, $latitude));
     }
-    
+
     public function testSaveCurrentUser() {
         $imei = "358263054833546";
         $mockDbHandler = $this->getMock('DatabaseHandler', array('executeQueryWithParams'));
@@ -184,7 +193,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $this->noiseDataService->setDatabaseHandler($mockDbHandler);
         $this->assertTrue($this->noiseDataService->saveCurrentUser($imei));
     }
-    
+
     public function testCreateDataUploadQuery_Default() {
         $rawData = array(
             'latitude' => 6.8899954465655,
@@ -207,7 +216,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $params = array(5, 707, $rawData['noise_level'], $rawData['date_time']);
         $this->assertEquals(array($dataInsertQuery, $params), $mockNoiseDataService->createDataUploadQuery($data));
     }
-    
+
     public function testCreateDataUploadQuery_NonExistingLocation() {
         $rawData = array(
             'latitude' => 6.8899954465655,
@@ -238,7 +247,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $params = array(5, 707, $rawData['noise_level'], $rawData['date_time']);
         $this->assertEquals(array($dataInsertQuery, $params), $mockNoiseDataService->createDataUploadQuery($data));
     }
-    
+
     public function testCreateDataUploadQuery_NonExistingUser() {
         $rawData = array(
             'latitude' => 6.8899954465655,
@@ -269,7 +278,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $params = array(5, 707, $rawData['noise_level'], $rawData['date_time']);
         $this->assertEquals(array($dataInsertQuery, $params), $mockNoiseDataService->createDataUploadQuery($data));
     }
-    
+
     public function testCreateDataUploadQuery_NonExistingUserAndLocation() {
         $rawData = array(
             'latitude' => 6.8899954465655,
@@ -308,7 +317,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $params = array(5, 707, $rawData['noise_level'], $rawData['date_time']);
         $this->assertEquals(array($dataInsertQuery, $params), $mockNoiseDataService->createDataUploadQuery($data));
     }
-    
+
     public function testInitializeDataUploadService() {
         $rawData = array(
             'latitude' => 6.8899954465655,
@@ -318,7 +327,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         );
         $metaData = array('imei' => "358263054833546", 'feature' => 'noiseData');
         $data = array('rawdata' => $rawData, 'metadata' => $metaData);
-        
+
         $dataInsertQuery = "INSERT INTO `cdme_noise_data` (`user_id`, `location_id`,`noise_level`,`date_time`) VALUES (?,?,?,?);";
         $params = array(5, 707, $rawData['noise_level'], $rawData['date_time']);
         $mockNoiseDataService = $this->getMock('TestNoiseDataService', array('createDataUploadQuery'));
@@ -326,22 +335,54 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
                 ->method('createDataUploadQuery')
                 ->with($data)
                 ->will($this->returnValue(array($dataInsertQuery, $params)));
-        
+
         $mockDbHandler = $this->getMock('DatabaseHandler', array('executeQueryWithParams'));
         $mockDbHandler->expects($this->once())
                 ->method('executeQueryWithParams')
                 ->with($dataInsertQuery, $params)
                 ->will($this->returnValue(array()));
         $mockNoiseDataService->setDatabaseHandler($mockDbHandler);
-        
+
         $expected = json_encode(array());
         $this->assertEquals($expected, $mockNoiseDataService->initializeDataUploadService($data));
+    }
+
+    public function testInitializeDataDownloadService_GenerateKmzLayer() {
+        $imei = 12345678901;
+        $timeStamp = 987654321;
+        $kmzArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kmz';
+        $kmlArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kml';
+        $data = array('metadata' => array('feature' => 'admin2kmzLayer', 'imei' => $imei), 'rawdata' => array('from_date' => '', 'to_date' => '', 'sampling_rate' => '', 'time_stamp' => $timeStamp));
+        $this->noiseDataService->initializeDataDownloadService($data);
+        $this->assertTrue(file_exists($kmzArchivePath));
+        unlink($kmlArchivePath);
+        unlink($kmzArchivePath);
+    }
+
+    public function testInitializeDataDownloadService_DownloadAllLocations() {
+        $this->testUtility->setLocations(5);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData(5);
+        $data = array('metadata' => array('feature' => 'allLocations'), 'rawdata' => array('from_date' => '', 'to_date' => ''));
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $this->assertTrue(count(json_decode($result)) == 5);
+    }
+
+    public function testInitializeDataDownloadService_AdminRegionStatistics() {
+        $this->testUtility->setLocations(5);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData(5);
+        $data = array('metadata' => array('feature' => 'adminRegionStatistics'), 'rawdata' => array('region_id' => 1, 'region_level' => 2, 'from_date' => '', 'to_date' => '', 'sampling_rate' => ''));
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        print_r($result);die;
     }
 
 }
 
 class TestNoiseDataService extends NoiseDataService {
+
     public function createDataUploadQuery($data) {
         return parent::createDataUploadQuery($data);
     }
+
 }

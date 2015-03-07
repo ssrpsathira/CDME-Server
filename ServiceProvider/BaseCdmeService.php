@@ -37,6 +37,13 @@ class BaseCdmeService {
         $this->databaseHandler = $databaseHandler;
     }
     
+    /**
+     * computing distance between two locations using havesine formula
+     * http://www.codecodex.com/wiki/Calculate_Distance_Between_Two_Points_on_a_Globe
+     * @param type $location1
+     * @param type $location2
+     * @return type
+     */
     public function getDisplacement($location1, $location2) {
         // convert from degrees to radians
         $latFrom = deg2rad($location1['lat']);

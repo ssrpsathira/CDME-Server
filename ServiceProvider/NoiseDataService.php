@@ -35,11 +35,17 @@ class NoiseDataService extends BaseCdmeService {
             return null;
         }
     }
-
-    public function getReverseGeoCodingLocationDetails($latitude, $longitude) {
+    
+    public function getLocationDetailsFromGoogle($latitude, $longitude) {
         $url = "http://maps.googleapis.com/maps/api/geocode/json?latlng=" . $latitude . "," . $longitude . "&sensor=true";
         $data = @file_get_contents($url);
-        $jsondata = json_decode($data, true);
+        return json_decode($data, true);
+//        $ds = DIRECTORY_SEPARATOR;
+//        return json_decode(file_get_contents(__DIR__.  "$ds..{$ds}tests{$ds}fixture{$ds}geocode.json"), true);
+    }
+
+    public function getReverseGeoCodingLocationDetails($latitude, $longitude) {
+        $jsondata = $this->getLocationDetailsFromGoogle($latitude, $longitude);
         if (is_array($jsondata) && $jsondata['status'] == "OK") {
             $location = array();
             foreach ($jsondata["results"] as $result) {
@@ -144,7 +150,7 @@ class NoiseDataService extends BaseCdmeService {
         $results = $this->getDatabaseHandler()->executeQueryWithParams($uploadQuery, $params);
         return json_encode($results);
     }
-
+    
     public function initializeDataDownloadService($data) {
         $results = $this->getFeatureWiseData($data);
         return json_encode($results);
@@ -154,7 +160,7 @@ class NoiseDataService extends BaseCdmeService {
         $fromDate = ($param['from_date']) ? strtotime($param['from_date']) : 0;
         $toDate = ($param['to_date']) ? strtotime($param['to_date']) : 0;
         $timeStamp = $param['time_stamp'];
-
+        $parameters = array();
         if ($fromDate == 0 && $toDate == 0) {
             $overallDataQuery = "SELECT r2.`id`, r2.`name`, n.`noise_level` FROM `cdme_admin_2_region` r2 LEFT JOIN `cdme_location` l ON l.`admin_2_region_id` = r2.`id` LEFT JOIN `cdme_noise_data` n ON n.`location_id` = l.`id`;";
         } elseif ($fromDate == 0 && $toDate != 0) {
@@ -522,31 +528,23 @@ class NoiseDataService extends BaseCdmeService {
             $result = $this->getDatabaseHandler()->executeQuery($maxToDateQuery);
             $toDate = $result[0][1];
         }
-        $allLocationQuery = "SELECT * FROM `cdme_location`;";
+        $allLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` != ?;";
         $specificLocationQuery = "SELECT * FROM `cdme_location` WHERE `id` = ?;";
-        $parameters = array($locationId);
-        $result = $this->getDatabaseHandler()->executeQueryWithParams($specificLocationQuery, $parameters);
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($specificLocationQuery, array($locationId));
         $specificLocation = $result[0];
-        $closeLocationArray[] = $specificLocation;
-        $result = $this->getDatabaseHandler()->executeQuery($allLocationQuery);
+        $locationIds = array($locationId);
+        $result = $this->getDatabaseHandler()->executeQueryWithParams($allLocationQuery, array($locationId));
         foreach ($result as $location) {
             $distance = $this->getDisplacement(array('lat' => $specificLocation['latitude'], 'long' => $specificLocation['longitude']), array('lat' => $location['latitude'], 'long' => $location['longitude']));
-            if ($distance <= $displacementRange && $location != $specificLocation) {
-                $closeLocationArray[] = $location;
+            if ($distance <= $displacementRange) {
+                $locationIds[] = $location['id'];
             }
         }
-        $noiseLevelDistributionArray = array();
-        foreach ($closeLocationArray as $location) {
-            $id = $location['id'];
-            $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` = ? AND (n.`date_time` >= ? AND n.`date_time` <= ?) GROUP BY n.`date_time`;";
-            $parameters = array($id, $fromDate, $toDate);
-            $result = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters);
-            foreach ($result as $key => $noiseLevel) {
-                $dateTime[$key] = (Integer) $noiseLevel['date_time'];
-                $noiseLevelDistributionArray[$key] = array('date_time' => $noiseLevel['date_time'], 'noise_level' => $noiseLevel['AVG(n.`noise_level`)']);
-            }
-        }
-        array_multisort($dateTime, SORT_ASC, $noiseLevelDistributionArray);
+        $placeHolder = implode(',', array_fill(0, count($locationIds), '?'));
+        $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) as noise_level FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` IN ($placeHolder) AND (n.`date_time` >= ? AND n.`date_time` <= ?) GROUP BY n.`date_time` order by n.`date_time`;";
+        $parameters = array_merge($locationIds, array($fromDate, $toDate));
+        $noiseLevelDistributionArray = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters);
+
         return $noiseLevelDistributionArray;
     }
 
