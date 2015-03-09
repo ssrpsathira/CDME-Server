@@ -543,7 +543,7 @@ class NoiseDataService extends BaseCdmeService {
         $placeHolder = implode(',', array_fill(0, count($locationIds), '?'));
         $locationNoiseQuery = "SELECT n.`date_time`, AVG(n.`noise_level`) as noise_level FROM `cdme_noise_data` n LEFT JOIN `cdme_location` l ON l.`id` = n.`location_id` WHERE l.`id` IN ($placeHolder) AND (n.`date_time` >= ? AND n.`date_time` <= ?) GROUP BY n.`date_time` order by n.`date_time`;";
         $parameters = array_merge($locationIds, array($fromDate, $toDate));
-        $noiseLevelDistributionArray = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters);
+        $noiseLevelDistributionArray = $this->getDatabaseHandler()->executeQueryWithParams($locationNoiseQuery, $parameters, false, PDO::FETCH_ASSOC);
 
         return $noiseLevelDistributionArray;
     }

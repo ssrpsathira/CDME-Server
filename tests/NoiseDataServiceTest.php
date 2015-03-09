@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../ServiceProvider/NoiseDataService.php';
-require_once __DIR__ . '/TestUtility.php';
 
 /**
  * Description of NoiseDataServiceTest
@@ -14,7 +13,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
     private $testUtility = null;
 
     public static function setUpBeforeClass() {
-        //require_once __DIR__ . '/TestUtility.php';
+        require_once __DIR__ . '/TestUtility.php';
     }
 
     protected function setUp() {
@@ -352,6 +351,8 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $timeStamp = 987654321;
         $kmzArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kmz';
         $kmlArchivePath = dirname(__FILE__) . '/../kml/SL/admin_2_regions_' . $imei . '_' . $timeStamp . '.kml';
+        $this->assertTrue(is_writable(dirname($kmzArchivePath)));
+        //$this->assertFalse(file_exists($kmzArchivePath));
         $data = array('metadata' => array('feature' => 'admin2kmzLayer', 'imei' => $imei), 'rawdata' => array('from_date' => '', 'to_date' => '', 'sampling_rate' => '', 'time_stamp' => $timeStamp));
         $this->noiseDataService->initializeDataDownloadService($data);
         $this->assertTrue(file_exists($kmzArchivePath));
@@ -362,25 +363,142 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
     public function testInitializeDataDownloadService_DownloadAllLocations() {
         $this->testUtility->setLocations(5);
         $this->testUtility->setUsers(1);
-        $this->testUtility->setNoiseData(5);
+        $this->testUtility->setNoiseData(5); // loads only first 5 records
         $data = array('metadata' => array('feature' => 'allLocations'), 'rawdata' => array('from_date' => '', 'to_date' => ''));
         $result = $this->noiseDataService->initializeDataDownloadService($data);
         $this->assertTrue(count(json_decode($result)) == 5);
     }
 
-    public function testInitializeDataDownloadService_AdminRegionStatistics() {
-        $this->testUtility->setLocations(5);
+    public function testInitializeDataDownloadService_AdminRegionStatistics_noData() {
+        $this->testUtility->setLocations(7);
         $this->testUtility->setUsers(1);
-        $this->testUtility->setNoiseData(5);
+        $this->testUtility->setNoiseData();
         $data = array('metadata' => array('feature' => 'adminRegionStatistics'), 'rawdata' => array('region_id' => 1, 'region_level' => 2, 'from_date' => '', 'to_date' => '', 'sampling_rate' => ''));
         $result = $this->noiseDataService->initializeDataDownloadService($data);
-        print_r($result);die;
+        $this->assertEquals('[{"date_time":1421551800,"mean":0,"median":null,"mod":null,"sd":0}]', $result);
+    }
+
+    public function testInitializeDataDownloadService_AdminRegionStatistics_onlyOnerecord() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $data = array('metadata' => array('feature' => 'adminRegionStatistics'), 'rawdata' => array('region_id' => 17, 'region_level' => 2, 'from_date' => '', 'to_date' => '', 'sampling_rate' => ''));
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $this->assertEquals('[{"date_time":1421551800,"mean":65,"median":"65.00","mod":"65.00","sd":0}]', $result);
+    }
+
+    public function testInitializeDataDownloadService_AdminRegionStatistics_multipleRecords() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $data = array('metadata' => array('feature' => 'adminRegionStatistics'), 'rawdata' => array('region_id' => 5, 'region_level' => 2, 'from_date' => '', 'to_date' => '', 'sampling_rate' => ''));
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $this->assertEquals('[{"date_time":1421551800,"mean":54.276666666667,"median":"52.85","mod":"32.85","sd":13.445955608369}]', $result);
+    }
+
+    public function testInitializeDataDownloadService_getLocationStatistics() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $rawData = array('location_id' => 1, 'displacement_range' => 10, 'from_date' => '', 'to_date' => '');
+        $data = array('metadata' => array('feature' => 'latestLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expected = array(
+            'mean' => 54.770000000000003,
+            'median' => 52.85,
+            'mod' => 41.25,
+            'sd' => 11.900565812879
+        );
+        $this->assertEquals($expected, json_decode($result, true));
+    }
+
+    public function testInitializeDataDownloadService_getLocationStatistics_dateRange() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $rawData = array('location_id' => 1, 'displacement_range' => 10, 'from_date' => '2015-01-17 13:00', 'to_date' => '2015-01-18 09:00');
+        $data = array('metadata' => array('feature' => 'latestLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expected = array(
+            'mean' => 47.049999999999997,
+            'median' => 41.25,
+            'mod' => 41.25,
+            'sd' => 5.7999999999999998
+        );
+        $this->assertEquals($expected, json_decode($result, true));
+    }
+
+    public function testInitializeDataDownloadService_getLocationStatistics_dateRange_displacementRange() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        // close locations within 10 kilo meters
+        $rawData = array('location_id' => 1, 'displacement_range' => 10 * 1000, 'from_date' => '2015-01-17 13:00', 'to_date' => '2015-01-18 09:00');
+        $data = array('metadata' => array('feature' => 'latestLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expected = array(
+            'mean' => 47.987499999999997,
+            'median' => 41.25,
+            'mod' => 32.85,
+            'sd' => 12.120301924870001
+        );
+        $this->assertEquals($expected, json_decode($result, true));
+    }
+
+    public function testInitializeDataDownloadService_getLocationNoiseValues() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $rawData = array('location_id' => 1, 'displacement_range' => 10, 'from_date' => '', 'to_date' => '');
+        $data = array('metadata' => array('feature' => 'overallLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expectedFirstRow = array(
+            'date_time' => '1421465400',
+            'noise_level' => '70.21',
+        );
+        $results = json_decode($result, true);
+        $this->assertEquals(3, count($results));
+        $this->assertEquals($expectedFirstRow, current($results));
+    }
+
+    public function testInitializeDataDownloadService_getLocationNoiseValues_dateRange() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        $rawData = array('location_id' => 1, 'displacement_range' => 10, 'from_date' => '2015-01-17 13:00', 'to_date' => '2015-01-18 09:00');
+        $data = array('metadata' => array('feature' => 'overallLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expectedFirstRow = array(
+            'date_time' => '1421479800',
+            'noise_level' => '41.25',
+        );
+        $results = json_decode($result, true);
+        $this->assertEquals(2, count($results));
+        $this->assertEquals($expectedFirstRow, current($results));
+    }
+
+    public function testInitializeDataDownloadService_getLocationNoiseValues_dateRange_displacementRange() {
+        $this->testUtility->setLocations(7);
+        $this->testUtility->setUsers(1);
+        $this->testUtility->setNoiseData();
+        // close locations within 10 kilo meters
+        $rawData = array('location_id' => 1, 'displacement_range' => 10 * 1000, 'from_date' => '2015-01-17 13:00', 'to_date' => '2015-01-18 09:00');
+        $data = array('metadata' => array('feature' => 'overallLocationStatistics'), 'rawdata' => $rawData);
+        $result = $this->noiseDataService->initializeDataDownloadService($data);
+        $expectedFirstRow = array(
+            'date_time' => '1421479800',
+            'noise_level' => '37.05',
+        );
+        $results = json_decode($result, true);
+        $this->assertEquals(2, count($results));
+        $this->assertEquals($expectedFirstRow, current($results));
     }
 
 }
 
 class TestNoiseDataService extends NoiseDataService {
 
+    // making the method public for test purposes
     public function createDataUploadQuery($data) {
         return parent::createDataUploadQuery($data);
     }

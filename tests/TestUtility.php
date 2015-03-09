@@ -124,11 +124,11 @@ class TestUtility {
     public static function readFixtureData($fileName, $numberOfRows = 0, $asAssocArray = false) {
         $filePath = self::getFilePath($fileName);
         if ($numberOfRows === 0) {
-            $rows = array_map('str_getcsv', file($filePath, FILE_SKIP_EMPTY_LINES));
+            $rows = array_map('str_getcsv', file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
         } else {
             $rowCount = 0;
             if (($fp = fopen($filePath, "r")) !== FALSE) {
-                $rows[] = fgetcsv($fp); // header row
+                $rows = array(fgetcsv($fp)); // header row
                 do {
                     $rows[] = fgetcsv($fp);
                     $rowCount++;
@@ -163,6 +163,11 @@ class TestUtility {
         return $this->fetchScalarValue($query);
     }
     
+    /**
+     * truncates location table and inserts given number of location data from locations fixture
+     * @param type $numberOfLocations
+     * @return number of location records that were inserted
+     */
     public function setLocations($numberOfLocations = 0) {
         $this->truncateLocations();
         $locations = self::readFixtureData('locations.csv', $numberOfLocations);

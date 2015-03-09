@@ -52,10 +52,13 @@ class DatabaseHandler {
         return $this->dbConnection;
     }
 
-    public function executeQueryWithParams($query, $params = array(), $returnCount = false) {
+    public function executeQueryWithParams($query, $params = array(), $returnCount = false, $fetchStyle = null) {
         try {
             $sth = $this->getDatabaseConnection()->prepare($query);
             if ($sth->execute($params)) {
+                if (!is_null($fetchStyle)) {
+                    $sth->setFetchMode($fetchStyle);
+                }
                 return $returnCount ? $sth->rowCount() : $sth->fetchAll();
             }
             return null;
