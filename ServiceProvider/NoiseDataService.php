@@ -40,8 +40,6 @@ class NoiseDataService extends BaseCdmeService {
         $url = "http://maps.googleapis.com/maps/api/geocode/json?latlng=" . $latitude . "," . $longitude . "&sensor=true";
         $data = @file_get_contents($url);
         return json_decode($data, true);
-//        $ds = DIRECTORY_SEPARATOR;
-//        return json_decode(file_get_contents(__DIR__.  "$ds..{$ds}tests{$ds}fixture{$ds}geocode.json"), true);
     }
 
     public function getReverseGeoCodingLocationDetails($latitude, $longitude) {
@@ -49,33 +47,24 @@ class NoiseDataService extends BaseCdmeService {
         if (is_array($jsondata) && $jsondata['status'] == "OK") {
             $location = array();
             foreach ($jsondata["results"] as $result) {
-                foreach ($result['address_components'] as $component) {
-                    switch ($component['types']) {
-                        case in_array('street_number', $component['types']):
-                            $location['street_number'] = $component['long_name'];
-                            break;
-                        case in_array('route', $component['types']):
-                            $location['street'] = $component['long_name'];
-                            break;
-                        case in_array('sublocality', $component['types']):
-                            $location['sublocality'] = $component['long_name'];
-                            break;
-                        case in_array('locality', $component['types']):
-                            $location['locality'] = $component['long_name'];
-                            break;
-                        case in_array('administrative_area_level_2', $component['types']):
-                            $location['admin_2'] = $component['long_name'];
-                            break;
-                        case in_array('administrative_area_level_1', $component['types']):
-                            $location['admin_1'] = $component['long_name'];
-                            break;
-                        case in_array('postal_code', $component['types']):
-                            $location['postal_code'] = $component['long_name'];
-                            break;
-                        case in_array('country', $component['types']):
-                            $location['country'] = $component['long_name'];
-                            break;
-                    }
+                foreach ($result['address_components'] as $component) {                    
+                    if (in_array('street_number', $component['types'])) {
+                        $location['street_number'] = $component['long_name'];
+                    } elseif (in_array('route', $component['types'])) {
+                        $location['street'] = $component['long_name'];
+                    } elseif (in_array('sublocality', $component['types'])) {
+                        $location['sublocality'] = $component['long_name'];
+                    } elseif (in_array('locality', $component['types'])) {
+                        $location['locality'] = $component['long_name'];
+                    } elseif (in_array('administrative_area_level_2', $component['types'])) {
+                        $location['admin_2'] = $component['long_name'];
+                    } elseif (in_array('administrative_area_level_1', $component['types'])) {
+                        $location['admin_1'] = $component['long_name'];
+                    } elseif (in_array('postal_code', $component['types'])) {
+                        $location['postal_code'] = $component['long_name'];
+                    } elseif (in_array('country', $component['types'])) {
+                        $location['country'] = $component['long_name'];
+                    }                   
                 }
             }
         }

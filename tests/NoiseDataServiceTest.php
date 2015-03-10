@@ -67,13 +67,49 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $this->noiseDataService->setDatabaseHandler($mockDbHandler);
         $this->assertEquals(1, $this->noiseDataService->isExistingUser($imei));
     }
+    
+    public function reverseGeoCodingDataProvider() {
+        $expected1 = array(
+            'street' => 'Vajira Lane',
+            'sublocality' => 'Colombo 05',
+            'locality' => 'Colombo',
+            'admin_2' => 'Colombo',
+            'admin_1' => 'Western Province',
+            'country' => 'Sri Lanka'
+        );
+        $expected2 = array(
+            'street' => 'Sri Devananda Road',
+            'locality' => 'Moratuwa',
+            'admin_2' => 'Colombo',
+            'admin_1' => 'Western Province',
+            'country' => 'Sri Lanka'
+        );
+        return array(
+            array(6.79533, 79.90380, 'geocode.json', $expected1),
+            array(6.782786, 79.903870, 'geocode2.json', $expected2)
+        );
+    }
 
-//    public function testGetReverseGeoCodingLocationDetails(){
-//        $longitude = 79.90380;
-//        $latitude = 6.79533;
-//        $result = $this->noiseDataService->getReverseGeoCodingLocationDetails($latitude, $longitude);
-//        var_dump($result);die;
-//    }
+    /**
+     * @covers NoiseDataService::getReverseGeoCodingLocationDetails
+     * @dataProvider reverseGeoCodingDataProvider
+     * @param float $latitude
+     * @param float $longitude
+     * @param string $fileName
+     * @param array $expected
+     */
+    public function testGetReverseGeoCodingLocationDetails($latitude, $longitude, $fileName, array $expected) {
+        $mockNoiseDataService = $this->getMock('NoiseDataService', array('getLocationDetailsFromGoogle'));
+        $jsonFilePath = __DIR__ . "/fixture/$fileName";
+        $jasonData = json_decode(file_get_contents($jsonFilePath), true);
+        $mockNoiseDataService->expects($this->once())
+                ->method('getLocationDetailsFromGoogle')
+                ->with($latitude, $longitude)
+                ->will($this->returnValue($jasonData));
+        $actual = $mockNoiseDataService->getReverseGeoCodingLocationDetails($latitude, $longitude);
+        $this->assertTrue(is_array($actual));
+        $this->assertEquals($expected, $actual);
+    }
 
     public function adminRegion1DataProvider() {
         return array(

@@ -1,0 +1,314 @@
+{
+   "results" : [
+      {
+         "address_components" : [
+            {
+               "long_name" : "Sri Devananda Road",
+               "short_name" : "Sri Devananda Rd",
+               "types" : [ "route" ]
+            },
+            {
+               "long_name" : "Villorawatta East",
+               "short_name" : "Villorawatta East",
+               "types" : [ "neighborhood", "political" ]
+            },
+            {
+               "long_name" : "Moratuwa",
+               "short_name" : "Moratuwa",
+               "types" : [ "locality", "political" ]
+            },
+            {
+               "long_name" : "Colombo",
+               "short_name" : "Colombo",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Western Province",
+               "short_name" : "WP",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Sri Devananda Road, Moratuwa, Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 6.7832487,
+                  "lng" : 79.90514560000001
+               },
+               "southwest" : {
+                  "lat" : 6.781623100000001,
+                  "lng" : 79.90378919999999
+               }
+            },
+            "location" : {
+               "lat" : 6.782036499999999,
+               "lng" : 79.90398949999999
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 6.783784880291503,
+                  "lng" : 79.90581638029151
+               },
+               "southwest" : {
+                  "lat" : 6.781086919708499,
+                  "lng" : 79.90311841970851
+               }
+            }
+         },
+         "place_id" : "ChIJsfd3xXFF4joRcuCG-OonoXM",
+         "types" : [ "route" ]
+      },
+      {
+         "address_components" : [
+            {
+               "long_name" : "Villorawatta East",
+               "short_name" : "Villorawatta East",
+               "types" : [ "neighborhood", "political" ]
+            },
+            {
+               "long_name" : "Moratuwa",
+               "short_name" : "Moratuwa",
+               "types" : [ "locality", "political" ]
+            },
+            {
+               "long_name" : "Colombo",
+               "short_name" : "Colombo",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Western Province",
+               "short_name" : "WP",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Villorawatta East, Moratuwa, Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 6.7901044,
+                  "lng" : 79.9075905
+               },
+               "southwest" : {
+                  "lat" : 6.7822207,
+                  "lng" : 79.8983958
+               }
+            },
+            "location" : {
+               "lat" : 6.787013,
+               "lng" : 79.9038774
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 6.7901044,
+                  "lng" : 79.9075905
+               },
+               "southwest" : {
+                  "lat" : 6.7822207,
+                  "lng" : 79.8983958
+               }
+            }
+         },
+         "place_id" : "ChIJ5Tm-dHJF4joRPJYyYJ8mlB4",
+         "types" : [ "neighborhood", "political" ]
+      },
+      {
+         "address_components" : [
+            {
+               "long_name" : "Moratuwa",
+               "short_name" : "Moratuwa",
+               "types" : [ "locality", "political" ]
+            },
+            {
+               "long_name" : "Colombo",
+               "short_name" : "Colombo",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Western Province",
+               "short_name" : "WP",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Moratuwa, Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 6.818719,
+                  "lng" : 79.90720150000001
+               },
+               "southwest" : {
+                  "lat" : 6.7161123,
+                  "lng" : 79.86933379999999
+               }
+            },
+            "location" : {
+               "lat" : 6.788070599999999,
+               "lng" : 79.8912813
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 6.818719,
+                  "lng" : 79.90720150000001
+               },
+               "southwest" : {
+                  "lat" : 6.7161123,
+                  "lng" : 79.86933379999999
+               }
+            }
+         },
+         "place_id" : "ChIJPbaz8gpF4joRx7OrCX641Us",
+         "types" : [ "locality", "political" ]
+      },
+      {
+         "address_components" : [
+            {
+               "long_name" : "Colombo",
+               "short_name" : "Colombo",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Western Province",
+               "short_name" : "WP",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Colombo, Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 6.979369999999999,
+                  "lng" : 80.2339281
+               },
+               "southwest" : {
+                  "lat" : 6.7491249,
+                  "lng" : 79.84307099999999
+               }
+            },
+            "location" : {
+               "lat" : 6.860196699999999,
+               "lng" : 80.0534923
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 6.979369999999999,
+                  "lng" : 80.2339281
+               },
+               "southwest" : {
+                  "lat" : 6.7491249,
+                  "lng" : 79.84307099999999
+               }
+            }
+         },
+         "place_id" : "ChIJjXY40tpT4joRAGLfCGSohJ8",
+         "types" : [ "administrative_area_level_2", "political" ]
+      },
+      {
+         "address_components" : [
+            {
+               "long_name" : "Western Province",
+               "short_name" : "WP",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Western Province, Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 7.3244779,
+                  "lng" : 80.3798341
+               },
+               "southwest" : {
+                  "lat" : 6.333996,
+                  "lng" : 79.818962
+               }
+            },
+            "location" : {
+               "lat" : 6.901608599999999,
+               "lng" : 80.0087746
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 7.3244779,
+                  "lng" : 80.3798341
+               },
+               "southwest" : {
+                  "lat" : 6.333996,
+                  "lng" : 79.818962
+               }
+            }
+         },
+         "place_id" : "ChIJmZuWSbRS4joRJjAclJYvwKc",
+         "types" : [ "administrative_area_level_1", "political" ]
+      },
+      {
+         "address_components" : [
+            {
+               "long_name" : "Sri Lanka",
+               "short_name" : "LK",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "Sri Lanka",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 9.835753,
+                  "lng" : 81.87870289999999
+               },
+               "southwest" : {
+                  "lat" : 5.9190779,
+                  "lng" : 79.5219827
+               }
+            },
+            "location" : {
+               "lat" : 7.873053999999999,
+               "lng" : 80.77179699999999
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 9.835753,
+                  "lng" : 81.87870289999999
+               },
+               "southwest" : {
+                  "lat" : 5.9190779,
+                  "lng" : 79.5219827
+               }
+            }
+         },
+         "place_id" : "ChIJnR5a9jxZ4joRjNPiALSkPeE",
+         "types" : [ "country", "political" ]
+      }
+   ],
+   "status" : "OK"
+}
