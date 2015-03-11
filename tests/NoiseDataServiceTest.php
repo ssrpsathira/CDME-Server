@@ -67,7 +67,7 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $this->noiseDataService->setDatabaseHandler($mockDbHandler);
         $this->assertEquals(1, $this->noiseDataService->isExistingUser($imei));
     }
-    
+
     public function reverseGeoCodingDataProvider() {
         $expected1 = array(
             'street' => 'Vajira Lane',
@@ -456,10 +456,10 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $data = array('metadata' => array('feature' => 'latestLocationStatistics'), 'rawdata' => $rawData);
         $result = $this->noiseDataService->initializeDataDownloadService($data);
         $expected = array(
-            'mean' => 47.049999999999997,
-            'median' => 41.25,
-            'mod' => 41.25,
-            'sd' => 5.7999999999999998
+            'mean' => 52.850000000000001,
+            'median' => 52.85,
+            'mod' => 52.85,
+            'sd' => 0
         );
         $this->assertEquals($expected, json_decode($result, true));
     }
@@ -473,10 +473,10 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $data = array('metadata' => array('feature' => 'latestLocationStatistics'), 'rawdata' => $rawData);
         $result = $this->noiseDataService->initializeDataDownloadService($data);
         $expected = array(
-            'mean' => 47.987499999999997,
-            'median' => 41.25,
-            'mod' => 32.85,
-            'sd' => 12.120301924870001
+            'mean' => 58.924999999999997,
+            'median' => 52.85,
+            'mod' => 52.85,
+            'sd' => 6.0750000000000002
         );
         $this->assertEquals($expected, json_decode($result, true));
     }
@@ -505,11 +505,11 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $data = array('metadata' => array('feature' => 'overallLocationStatistics'), 'rawdata' => $rawData);
         $result = $this->noiseDataService->initializeDataDownloadService($data);
         $expectedFirstRow = array(
-            'date_time' => '1421479800',
-            'noise_level' => '41.25',
+            'date_time' => '1421551800',
+            'noise_level' => '52.85',
         );
         $results = json_decode($result, true);
-        $this->assertEquals(2, count($results));
+        $this->assertEquals(1, count($results));
         $this->assertEquals($expectedFirstRow, current($results));
     }
 
@@ -522,11 +522,11 @@ class NoiseDataServiceTest extends PHPUnit_Framework_TestCase {
         $data = array('metadata' => array('feature' => 'overallLocationStatistics'), 'rawdata' => $rawData);
         $result = $this->noiseDataService->initializeDataDownloadService($data);
         $expectedFirstRow = array(
-            'date_time' => '1421479800',
-            'noise_level' => '37.05',
+            'date_time' => '1421551800',
+            'noise_level' => '58.925',
         );
         $results = json_decode($result, true);
-        $this->assertEquals(2, count($results));
+        $this->assertEquals(1, count($results));
         $this->assertEquals($expectedFirstRow, current($results));
     }
 
